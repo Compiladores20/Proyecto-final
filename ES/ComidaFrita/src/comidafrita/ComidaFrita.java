@@ -15,7 +15,10 @@ public class ComidaFrita {
         String prueba = ">>\n"
                 + "D Hola Tiempo;\n"
                 + "D Pola Tiempo;\n"
-                + "P :hola\nTurnOn();\nP hola|\n";
+                + "INZ MiVariable = 5;\n"
+                + "Call ombre\n"
+                + "-MiVariable-;\n"
+                ;
         
         System.out.println("resultado:"+Analisis(prueba));
     }
@@ -35,7 +38,6 @@ public class ComidaFrita {
                 String test;
                 test = codigo.substring(0, index) + ";";
                 codigo = codigo.substring(1);
-                //System.out.println("Esto voy a testear como variable:"+test);
                 if (revisarDeclaracionVariable(test)) {
                     salir = true;
                 }
@@ -73,23 +75,18 @@ public class ComidaFrita {
         if (test.length != 4) {
             resultado = false;
         } else {
-            //System.out.println("test0:" + test[0] + " test1:" + test[1] + " test2:" + test[2] + " test3:" + test[3]);
             if (!revisarNombresReservados(test[1])) {
                 resultado = false;
             }
-            //System.out.println("Prueba1:" + resultado);
             if (test[1].substring(0, 1).compareTo(test[1].substring(0, 1).toUpperCase()) != 0) {
                 resultado = false;
             }
-            //System.out.println("Prueba2:" + resultado);
             if (test[2].compareTo("=") != 0) {
                 resultado = false;
             }
-            //System.out.println("Prueba3:" + resultado);
             if (test[3].substring(test[3].length() - 1).compareTo(";") != 0) {
                 resultado = false;
             }
-            //System.out.println("Prueba4:" + resultado);
         }
 
         return resultado;
@@ -123,7 +120,7 @@ public class ComidaFrita {
     }
     public static boolean revisarTurnOnAll(String codigo)
     {
-        String expresionTurnOnAll="TurnOn\\(\\)\\;";
+        String expresionTurnOnAll="TurnON\\(\\)\\;";
         return codigo.matches(expresionTurnOnAll);
     }
     public static boolean revisarTurnOffAll(String codigo)
@@ -232,10 +229,8 @@ public class ComidaFrita {
         boolean resultado=false;
         String nombreI=codigo.substring(codigo.indexOf(":")+1,codigo.indexOf("\n"));
         codigo=codigo.substring(codigo.indexOf("\n"));
-        //System.out.println("revisandoP3"+codigo.substring(codigo.indexOf("P ")+2));
         String nombreF=codigo.substring(codigo.indexOf("P ")+2,codigo.indexOf("|"));
         resultado=nombreI.compareTo(nombreF)==0;
-        //System.out.println(nombreI+":"+nombreF);
         return resultado;
     }
     public static boolean revisarP4(String codigo)
@@ -259,17 +254,14 @@ public class ComidaFrita {
         else if(!revisarP1(codigo.substring(0,codigo.indexOf("\n"))))
         {
             resultado=false;
-            //System.out.println(resultado+"1");
         }
         else if(!revisarP2(toP2.substring(toP2.indexOf("P "))))
         {
             resultado=false;
-            //System.out.println(resultado+"2");
         }
         else if(!revisarP3(codigo))
         {
             resultado=false;
-            //System.out.println(resultado+"3");
         }
         return resultado;
     }
@@ -284,7 +276,7 @@ public class ComidaFrita {
                if (revisarP(codigo.substring(0,codigo.indexOf("|")+1))) 
                {
                    String prueba=codigo.substring(1);
-                   if(revisarCuerpo(codigo.substring(codigo.indexOf("\n")+1,prueba.indexOf("P ")+1)).length()>0)
+                   if(revisarCuerpo(codigo.substring(codigo.indexOf("\n")+1,prueba.indexOf("P "))).length()==0)
                    {
                        codigo = codigo.substring(codigo.indexOf("|") + 1);
                        if (codigo.length() > 0) 
@@ -312,11 +304,9 @@ public class ComidaFrita {
       
         while((codigo.substring(0,1).compareTo("D")==0)&&(!salir))
         {
-            //System.out.println(codigo.substring(0,codigo.indexOf(";")+1));
             if(revisarDeclaracionVariable(codigo.substring(0,codigo.indexOf(";")+1)))
             {
                 codigo=codigo.substring(codigo.indexOf(";")+1);
-                //System.out.println("lo que queda:"+codigo);
                 if(codigo.length()>0)
                 {
                     codigo=codigo.substring(1);
@@ -355,6 +345,7 @@ public class ComidaFrita {
             }
             else if(codigo.contains(";"))
             {
+                System.out.println("Esto estoy comparando en faciles:"+codigo.substring(0, codigo.indexOf(";") + 1));
                 if (revisarIncrementoDecremento(codigo.substring(0, codigo.indexOf(";") + 1)))// Incremento y decremento
                 {
                     codigo = codigo.substring(codigo.indexOf(";") + 1);
@@ -393,7 +384,6 @@ public class ComidaFrita {
     }
     public static String revisarComplejas(String codigo)
     {
-        System.out.println("que llega a revisar complejas:"+codigo);
         if(codigo.length()>4)
         {
             if (codigo.substring(0, 3).compareTo("If ") == 0) 
@@ -465,8 +455,12 @@ public class ComidaFrita {
     public static String revisarCuerpo(String codigo)
     {
         boolean salir=false;
+        codigo=eliminarSaltoLinea(codigo);
         while ((!salir)&&(codigo.length()>0))
         {
+            codigo=eliminarSaltoLinea(codigo);
+            System.out.println("revisarComplejasResultado:"+revisarComplejas(codigo));
+            System.out.println("revisarFacilesResultado:"+revisarFaciles(codigo));
             if(revisarComplejas(codigo).compareTo(codigo)!=0)
             {
                 codigo=revisarComplejas(codigo);
@@ -494,18 +488,18 @@ public class ComidaFrita {
                     codigo = eliminarVariablesRevision(codigo);
                     //revisar cuerpo del programa
                     codigo=revisarCuerpo(codigo);
-                    if(codigo.substring(0,1).compareTo("P")==0)
+                    if(codigo.length()>0)
                     {
-                        codigo=revisarPs(codigo);
+                        if (codigo.substring(0, 1).compareTo("P") == 0) 
+                        {
+                            codigo = revisarPs(codigo);
+                        } 
+                        else if (codigo.contains("P ")) 
+                        {
+                            codigo = "Hay un error en el cuerpo del programa\n" + codigo;
+                        }
                     }
-                    else if(codigo.contains("P "))
-                    {
-                        codigo="Hay un error en el cuerpo del programa\n"+codigo;
-                    }
-                    else
-                    {
-                        codigo="No se respeto el orden del programa\n"+codigo;
-                    }
+                    
                 }
                 else{codigo="Hay un error en la declaracion de variables\n"+eliminarVariablesRevision(codigo);}
             }
@@ -516,9 +510,12 @@ public class ComidaFrita {
     }
     public static String eliminarSaltoLinea(String codigo)
     {
-        if(codigo.substring(0,1).compareTo("\n")==0)
+        if(codigo.length()>1)
         {
-            codigo=codigo.substring(1);
+            if (codigo.substring(0, 1).compareTo("\n") == 0) 
+            {
+                codigo = codigo.substring(1);
+            }
         }
         return codigo;
     }
