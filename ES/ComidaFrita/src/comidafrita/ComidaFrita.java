@@ -12,9 +12,12 @@ package comidafrita;
 public class ComidaFrita {
 
     public static void main(String[] args) {
-        String prueba = "elseif";
+        String prueba = ">>\n"
+                + "D Hola Tiempo;\n"
+                + "D Pola Tiempo;\n"
+                + "P :hola\nTurnOn();\nP hola|\n";
         
-        System.out.println("resultado:"+prueba.substring(0,6));
+        System.out.println("resultado:"+Analisis(prueba));
     }
 
     public static boolean hayVariable(String codigo) {
@@ -135,7 +138,7 @@ public class ComidaFrita {
     }
     public static boolean revisarSoundOff(String codigo)
     {
-        String expresionSoundOff="SoundOn\\(\\)\\;";
+        String expresionSoundOff="SoundOff\\(\\)\\;";
         return codigo.matches(expresionSoundOff);
     }
     public static boolean revisarDow1(String codigo)
@@ -229,31 +232,44 @@ public class ComidaFrita {
         boolean resultado=false;
         String nombreI=codigo.substring(codigo.indexOf(":")+1,codigo.indexOf("\n"));
         codigo=codigo.substring(codigo.indexOf("\n"));
-        System.out.println("revisandoP3"+codigo.substring(codigo.indexOf("P ")+2));
+        //System.out.println("revisandoP3"+codigo.substring(codigo.indexOf("P ")+2));
         String nombreF=codigo.substring(codigo.indexOf("P ")+2,codigo.indexOf("|"));
-        System.out.println(nombreI+":"+nombreF);
-        return nombreI.compareTo(nombreF)==0;
+        resultado=nombreI.compareTo(nombreF)==0;
+        //System.out.println(nombreI+":"+nombreF);
+        return resultado;
+    }
+    public static boolean revisarP4(String codigo)
+    {
+        boolean resultado=true;
+        if(!codigo.substring(codigo.indexOf("\n")).contains("P "))
+        {
+            resultado=false;
+        }
+        return resultado;
     }
     public static boolean revisarP(String codigo)
     {
         //revisa si el encabezado esta bien p1 si el final esta bien p2 y si el encabezado==final
         boolean resultado=true;
-        System.out.println("que me llega"+codigo);
         String toP2=codigo.substring(codigo.indexOf("\n")+1);
-        if(!revisarP1(codigo.substring(0,codigo.indexOf("\n"))))
+        if(!revisarP4(codigo))
         {
             resultado=false;
-            System.out.println(resultado+"1");
+        }
+        else if(!revisarP1(codigo.substring(0,codigo.indexOf("\n"))))
+        {
+            resultado=false;
+            //System.out.println(resultado+"1");
         }
         else if(!revisarP2(toP2.substring(toP2.indexOf("P "))))
         {
             resultado=false;
-            System.out.println(resultado+"2");
+            //System.out.println(resultado+"2");
         }
         else if(!revisarP3(codigo))
         {
             resultado=false;
-            System.out.println(resultado+"3");
+            //System.out.println(resultado+"3");
         }
         return resultado;
     }
@@ -262,20 +278,27 @@ public class ComidaFrita {
        boolean salir=false;
        while((codigo.compareTo("")!=0)&&(!salir))
        {
-           //revisar si tiene final 
-           if(codigo.substring(1).contains("P "))
+           //revisar si tiene final y inicio
+           if((codigo.substring(1).contains("P "))&&(codigo.contains("|")))
            {
-               System.out.println("revisando!"+codigo.substring(0,codigo.indexOf("|")+1));
-               
                if (revisarP(codigo.substring(0,codigo.indexOf("|")+1))) 
                {
-                   codigo=codigo.substring(codigo.indexOf("|")+1);
-                   if(codigo.length()>0)
+                   String prueba=codigo.substring(1);
+                   if(revisarCuerpo(codigo.substring(codigo.indexOf("\n")+1,prueba.indexOf("P ")+1)).length()>0)
                    {
-                       codigo=codigo.substring(1);
+                       codigo = codigo.substring(codigo.indexOf("|") + 1);
+                       if (codigo.length() > 0) 
+                       {
+                           codigo = codigo.substring(1);
+                       }
                    }
+                   else
+                   {
+                       salir=true;codigo="Hay un error dentro del procedimiento\n"+codigo;
+                   }
+                   
                }
-               else{salir=true;}
+               else{salir=true;codigo="Este procedimiento esta mal declarado\n"+codigo;}
            }
            else{salir=true;}
            
@@ -289,11 +312,11 @@ public class ComidaFrita {
       
         while((codigo.substring(0,1).compareTo("D")==0)&&(!salir))
         {
-            System.out.println(codigo.substring(0,codigo.indexOf(";")+1));
+            //System.out.println(codigo.substring(0,codigo.indexOf(";")+1));
             if(revisarDeclaracionVariable(codigo.substring(0,codigo.indexOf(";")+1)))
             {
                 codigo=codigo.substring(codigo.indexOf(";")+1);
-                System.out.println("lo que queda:"+codigo);
+                //System.out.println("lo que queda:"+codigo);
                 if(codigo.length()>0)
                 {
                     codigo=codigo.substring(1);
@@ -321,324 +344,138 @@ public class ComidaFrita {
         }
         return codigo;
     }
-    public static boolean verificarDentroDow(String codigo)
+
+    public static String revisarFaciles(String codigo)
+    {
+        if(codigo.contains("\n"))
+        {
+            if (revisarCall(codigo.substring(0, codigo.indexOf("\n"))))//revisar Call
+            {
+                codigo = codigo.substring(codigo.indexOf("\n") + 1);
+            }
+            else if(codigo.contains(";"))
+            {
+                if (revisarIncrementoDecremento(codigo.substring(0, codigo.indexOf(";") + 1)))// Incremento y decremento
+                {
+                    codigo = codigo.substring(codigo.indexOf(";") + 1);
+                } 
+                else if (revisarIniciarVariables(codigo.substring(0, codigo.indexOf(";") + 1)))//INZ
+                {
+                    codigo = codigo.substring(codigo.indexOf(";") + 1);
+                } 
+                else if (revisarSoundOn(codigo.substring(0, codigo.indexOf(";") + 1)))//SoundOn
+                {
+                    codigo = codigo.substring(codigo.indexOf(";") + 1);
+                } 
+                else if (codigo.substring(0, codigo.indexOf(";") + 1).compareTo("SoundOff();") == 0)//SoundOff
+                {
+                    codigo = codigo.substring(12);
+                } 
+                else if (codigo.substring(0, codigo.indexOf(";") + 1).compareTo("TurnON();") == 0)//TurnOn
+                {
+                    codigo = codigo.substring(10);
+                } 
+                else if (codigo.substring(0, codigo.indexOf(";") + 1).compareTo("TurnOff();") == 0)//TurnOff
+                {
+                    codigo = codigo.substring(11);
+                } 
+                else if (revisarTurnOn(codigo.substring(0, codigo.indexOf(";") + 1)))//TurnOn(especifico)
+                {
+                    codigo = codigo.substring(codigo.indexOf(";") + 1);
+                } 
+                else if (revisarTurnOff(codigo.substring(0, codigo.indexOf(";") + 1)))//TurnOff(especifico)
+                {
+                    codigo = codigo.substring(codigo.indexOf(";") + 1);
+                }
+            }
+        }
+        return eliminarSaltoLinea(codigo);
+    }
+    public static String revisarComplejas(String codigo)
+    {
+        System.out.println("que llega a revisar complejas:"+codigo);
+        if(codigo.length()>4)
+        {
+            if (codigo.substring(0, 3).compareTo("If ") == 0) 
+            {
+                if (codigo.contains("Endif;")) 
+                {
+                    if (revisarIf(codigo.substring(0, codigo.indexOf("Endif;") + 6))) 
+                    {
+                        if (revisarDentroCompleja(codigo.substring(codigo.indexOf("\n") + 1, codigo.indexOf("Endif;")))) 
+                        {
+                            codigo = codigo.substring(codigo.indexOf("Endif;") + 6);
+                        }
+                    }
+                }
+            } 
+            else if (codigo.substring(0, 4).compareTo("For ") == 0) 
+            {
+                if (codigo.contains("FEnd")) 
+                {
+                    if (revisarFor(codigo.substring(0, codigo.indexOf("FEnd")))) 
+                    {
+                        if (revisarDentroCompleja(codigo.substring(codigo.indexOf("\n") + 1, codigo.indexOf("FEnd")))) 
+                        {
+                            codigo = codigo.substring(codigo.indexOf("FEnd") + 4);
+                        }
+                    }
+                }
+            } 
+            else if (codigo.substring(0, 4).compareTo("Dow ") == 0) 
+            {
+                if (codigo.contains("Enddo;")) {
+                    if (revisarDow(codigo.substring(0, codigo.indexOf("Enddo;")))) 
+                    {
+                        if (revisarDentroCompleja(codigo.substring(codigo.indexOf("\n") + 1, codigo.indexOf("Enddo;")))) 
+                        {
+                            codigo = codigo.substring(codigo.indexOf("Enddo;") + 6);
+                        }
+                    }
+                }
+            }
+        }
+        
+        return codigo;
+    }
+    public static boolean revisarDentroCompleja(String codigo)
     {
         boolean resultado=true;
-        String test=codigo.substring(codigo.indexOf("\n"),codigo.indexOf("Enddo;"));
-        test=test.replaceAll("Exit", "");
-        while ((codigo.compareTo("")!=0)&&(resultado))
+        if(codigo.contains("Exit\n"))
         {
-            if(cuerpoPrograma1(test).compareTo("error")==0)
+            codigo=codigo.replace("Exit\n", "");
+        }
+        while((resultado)&&(codigo.length()>0))
+        {
+            if(revisarFaciles(codigo).compareTo(codigo)!=0)
+            {
+                codigo=revisarFaciles(codigo);
+            }
+            else if(revisarComplejas(codigo).compareTo(codigo)!=0)
+            {
+                codigo=revisarComplejas(codigo);
+            }
+            else
             {
                 resultado=false;
             }
-            else
-            {
-                test=cuerpoPrograma1(test);
-            }
         }
         return resultado;
     }
-    public static boolean verificarDentroIf(String codigo)
-    {
-        boolean resultado=true;
-        String test=codigo.substring(codigo.indexOf("\n"+1));
-        boolean salir=false;
-        while ((!salir)&&(resultado))
-        {
-            if(test.length()>6)
-            {
-                if(test.substring(0,6).compareTo("elseIf")==0)
-                {
-                    salir=true;
-                }
-            }
-            else if(test.length()==0)
-            {
-                salir=true;
-            }
-            else if(cuerpoPrograma1(test).compareTo("error")==0)
-                {
-                    resultado=false;
-                }
-            else
-            {
-                test=cuerpoPrograma1(test);
-            }
-        }
-        salir=false;
-        while ((!salir)&&(resultado))
-        {
-            if(test.length()>4)
-            {
-                if(test.substring(0,4).compareTo("else")==0)
-                {
-                    salir=true;
-                }
-            }
-            else if(test.length()==0)
-            {
-                salir=true;
-            }
-            else if(cuerpoPrograma1(test).compareTo("error")==0)
-                {
-                    resultado=false;
-                }
-            else
-            {
-                test=cuerpoPrograma1(test);
-            }
-        }
-        salir=false;
-        while ((!salir)&&(resultado))
-        {
-            if(test.length()>6)
-            {
-                if(test.substring(0,6).compareTo("Endif")==0)
-                {
-                    salir=true;
-                }
-            }
-            else if(test.length()==0)
-            {
-                salir=true;
-            }
-            else if(cuerpoPrograma1(test).compareTo("error")==0)
-                {
-                    resultado=false;
-                }
-            else
-            {
-                test=cuerpoPrograma1(test);
-            }
-        }
-        return resultado;
-    }
-    public static boolean verificarDentroFor(String codigo)
-    {
-        boolean resultado=true;
-        String test=codigo.substring(codigo.indexOf("Times")+5,codigo.indexOf("FEnd"));
-        boolean salir=false;
-        while((!salir)&&(resultado))
-        {
-            if(test.compareTo("")==0)
-            {
-                salir=true;
-            }
-            else if(cuerpoPrograma1(test).compareTo("error")==0)
-                {
-                    resultado=false;
-                }
-            else
-            {
-                test=cuerpoPrograma1(test);
-            }
-        }
-        return resultado;
-    }
-    public static String cuerpoPrograma1(String codigo)
-    {
-        if(codigo.substring(0,1).compareTo("D")==0)//ES dow
-        {
-            if(codigo.contains("Enddo;"))
-            {
-                if (revisarDow(codigo.substring(0, codigo.indexOf("Enddo;") + 6))) 
-                {
-                    if(verificarDentroDow(codigo.substring(0, codigo.indexOf("Enddo;") + 6)))
-                    {
-                        codigo = codigo.substring(codigo.indexOf("Enddo;") + 7);
-                        if (codigo.length() > 0) 
-                        {
-                            codigo = codigo.substring(1);
-                        }
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("F")==0)
-        {
-            if(codigo.contains("FEnd"))
-            {
-                if (revisarFor(codigo.substring(0, codigo.indexOf("FEnd") + 4))) 
-                {
-                    if(verificarDentroFor(codigo.substring(0, codigo.indexOf("FEnd") + 4)))
-                    {
-                        codigo = codigo.substring(codigo.indexOf("FEnd") + 4);
-                        if (codigo.length() > 0) 
-                        {
-                            codigo = codigo.substring(1);
-                        }
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("I")==0)//If o INZ
-        {
-            if(codigo.contains("Endif;"))
-            {
-                if (codigo.substring(0, 2).compareTo("If") == 0)//If ///////////////////////////////
-                {
-                    if(revisarIf(codigo.substring(0,codigo.indexOf("Endif")+6)))
-                    {
-                        if (codigo.substring(0, codigo.indexOf("Endif") + 6).contains("\n")) 
-                        {
-                            if (verificarDentroIf(codigo.substring(0, codigo.indexOf("Endif") + 6))) 
-                            {
-                                codigo = codigo.substring(codigo.indexOf("Endif") + 6);
-                                if (codigo.length() > 0) 
-                                {
-                                    codigo = codigo.substring(1);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else if(codigo.substring(0,3).compareTo("INZ")==0)//INZ
-            {
-                if(codigo.contains(";"))
-                {
-                    if (revisarIniciarVariables(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                    {
-                        codigo = codigo.substring(codigo.indexOf(";") + 1);
-                        if (codigo.length() > 0) 
-                        {
-                            codigo = codigo.substring(1);
-                        }
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("+")==0)// Incremento
-        {
-            if(codigo.contains(";"))
-            {
-                if (revisarIncrementoDecremento(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("-")==0)// Decremento
-        {
-            if(codigo.contains(";"))
-            {
-                if (revisarIncrementoDecremento(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("T")==0)
-        {
-            if(codigo.contains(";"))
-            {
-                if (codigo.substring(0, codigo.indexOf(";") + 1).compareTo("TurnOn();") == 0) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                } 
-                else if (codigo.substring(0, codigo.indexOf(";") + 1).compareTo("TurnOff();") == 0) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                } 
-                else if (revisarTurnOn(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                } 
-                else if (revisarTurnOff(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                }
-            }
-                
-        }
-        else if(codigo.substring(0,1).compareTo("S")==0)
-        {
-            if(codigo.contains(";"))
-            {
-                if (revisarSoundOn(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                } 
-                else if (revisarSoundOff(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("C")==0)//revisar Call
-        {
-            if(codigo.contains(";"))
-            {
-                if (revisarCall(codigo.substring(0, codigo.indexOf(";") + 1))) 
-                {
-                    codigo = codigo.substring(codigo.indexOf(";") + 1);
-                    if (codigo.length() > 0) 
-                    {
-                        codigo = codigo.substring(1);
-                    }
-                }
-            }
-        }
-        else if(codigo.substring(0,1).compareTo("P")==0)// Procedimientos
-        {
-            if(revisarPs(codigo).compareTo("")==0)
-            {
-                codigo="";
-            }
-        }
-        else{codigo="error";}
-        return codigo;
-    }
-    public static String cuerpoPrograma(String codigo)
+    public static String revisarCuerpo(String codigo)
     {
         boolean salir=false;
-        while(!salir)
+        while ((!salir)&&(codigo.length()>0))
         {
-            if(cuerpoPrograma1(codigo).compareTo("error")==0)
+            if(revisarComplejas(codigo).compareTo(codigo)!=0)
             {
-                salir=true;
+                codigo=revisarComplejas(codigo);
             }
-            else if(cuerpoPrograma1(codigo).compareTo("")==0)
+            else if (revisarFaciles(codigo).compareTo(codigo)!=0)
             {
-                salir=true;
+                codigo=revisarFaciles(codigo);
             }
-            else
-            {
-                codigo=cuerpoPrograma1(codigo);
-            }
+            else{salir=true;}
         }
         return codigo;
     }
@@ -648,22 +485,40 @@ public class ComidaFrita {
         {
             codigo=codigo.substring(codigo.indexOf("\n")+1);
             //verificar si despues de comentarios estan la definicion de variables
-            if(codigo.substring(0,1).compareTo("D")==0)
+            //verificar condicion de alguna variable
+            if((codigo.substring(0,1).compareTo("D")==0)&&(hayVariable(codigo)))
             {
-                //verificar condicion de alguna variable
-                if(hayVariable(codigo))
+                //Se verifica las variables
+                if(revisarVariables(codigo))
                 {
-                    if(revisarVariables(codigo))
+                    codigo = eliminarVariablesRevision(codigo);
+                    //revisar cuerpo del programa
+                    codigo=revisarCuerpo(codigo);
+                    if(codigo.substring(0,1).compareTo("P")==0)
                     {
-                        codigo=eliminarVariablesRevision(codigo);
-                        if(codigo.contains(";"))//acordarme de revisar esto
-                        {
-                            
-                        }
+                        codigo=revisarPs(codigo);
                     }
-                    else{codigo=eliminarVariablesRevision(codigo);}
+                    else if(codigo.contains("P "))
+                    {
+                        codigo="Hay un error en el cuerpo del programa\n"+codigo;
+                    }
+                    else
+                    {
+                        codigo="No se respeto el orden del programa\n"+codigo;
+                    }
                 }
+                else{codigo="Hay un error en la declaracion de variables\n"+eliminarVariablesRevision(codigo);}
             }
+            else{codigo="No se ha respetado el orden del programa o no hay ninguna variable\n"+codigo;}
+        }
+        else{codigo="No se ha respetado el orden del programa\n"+codigo;}
+        return codigo;
+    }
+    public static String eliminarSaltoLinea(String codigo)
+    {
+        if(codigo.substring(0,1).compareTo("\n")==0)
+        {
+            codigo=codigo.substring(1);
         }
         return codigo;
     }
