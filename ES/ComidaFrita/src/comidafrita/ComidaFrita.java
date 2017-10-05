@@ -11,7 +11,9 @@ package comidafrita;
  */
 public class ComidaFrita {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
+        /*
         String prueba = ">>\n"
                 + "D Hola Tiempo;\n"
                 + "D Pola Tiempo;\n"
@@ -21,6 +23,9 @@ public class ComidaFrita {
                 ;
         
         System.out.println("resultado:"+Analisis(prueba));
+*/
+        String prueba="Holo;ads";
+        System.out.println();
     }
 
     public static boolean hayVariable(String codigo) {
@@ -334,7 +339,123 @@ public class ComidaFrita {
         }
         return codigo;
     }
-
+    public static boolean revisarCantidadIfEndif(String codigo)
+    {
+        boolean resultado=true;
+        int cantidadIf=0;
+        int cantidadEndif=0;
+        while((resultado)&&(codigo.length()>0))
+        {
+            if(codigo.substring(0,codigo.indexOf("\n")).contains("If "))
+            {
+                cantidadIf++;
+            }
+            else if(codigo.substring(0,codigo.indexOf("\n")).contains("Endif;"))
+            {
+                cantidadEndif++;
+            }
+            codigo=eliminarPrimerLinea(codigo);
+        }
+        return cantidadIf==cantidadEndif;
+    }
+    public static int indexUltimoEndif(String codigo)
+    {
+        int index=0;
+        int ultimo=1;
+        codigo=codigo.substring(indexSaltoDelinea(codigo));
+        while ((ultimo==0)||(codigo.length()>0))
+        {
+            if(codigo.substring(0,indexSaltoDelinea(codigo)).contains("Endif;"))
+            {
+                ultimo--;
+                if(codigo.substring(indexSaltoDelinea(codigo)).contains("If "))
+                {
+                    ultimo++;
+                }
+            }
+            else if(codigo.substring(0,indexSaltoDelinea(codigo)).contains("If "))
+            {
+                ultimo++;
+            }
+            index+=indexSaltoDelinea(codigo);
+            if(ultimo==0)
+            {
+                index+=codigo.indexOf("Endif;");
+            }
+            codigo=eliminarPrimerLinea(codigo);          
+        }
+        if(ultimo!=0)
+        {
+            index=-1;
+        }
+        return index;
+    }
+    
+    public static int indexSaltoDelinea(String codigo) 
+    {
+        int index=0;
+        if ((codigo.contains(";")) && (codigo.contains("\n"))) 
+        {
+            if (codigo.indexOf(";") < codigo.indexOf("\n")) 
+            {
+                index = codigo.indexOf(";") + 1;
+                if(codigo.substring(index,index+1).compareTo("\n")==0)
+                {
+                    index++;
+                }
+            } 
+            else 
+            {
+                index = codigo.indexOf("\n") + 1;
+            }
+        } 
+        else if (codigo.contains(";")) 
+        {
+            index = codigo.indexOf(";") + 1;
+        } 
+        else if (codigo.contains("\n")) 
+        {
+            index = codigo.indexOf("\n") + 1;
+        }
+        return index;
+    }
+    public static String eliminarPrimerLinea(String codigo)
+    {
+        if((codigo.contains(";"))&&(codigo.contains("\n")))
+        {
+            if (codigo.indexOf(";") < codigo.indexOf("\n")) 
+            {
+                codigo = eliminarSaltoLinea(codigo.substring(codigo.indexOf(";") + 1));
+            } 
+            else 
+            {
+                codigo = codigo.substring(codigo.indexOf("\n") + 1);
+            }
+        }
+        else if(codigo.contains(";"))
+        {
+            codigo=codigo.substring(codigo.indexOf(";")+1);
+        }
+        else if(codigo.contains("\n"))
+        {
+            codigo=codigo.substring(codigo.indexOf("\n")+1);
+        }
+        else
+        {
+            codigo="";
+        }
+        return codigo;
+    }
+    public static String replacePrimero(String codigo,String buscado)
+    {
+        if(codigo.contains(buscado))
+        {   
+            int index=codigo.indexOf(buscado);
+            codigo=codigo.substring(0,index).replace(buscado, "")+
+                    codigo.substring(index+buscado.length());
+        }
+        return codigo;
+    }
     public static String revisarFaciles(String codigo)
     {
         if(codigo.contains("\n"))
@@ -388,13 +509,24 @@ public class ComidaFrita {
         {
             if (codigo.substring(0, 3).compareTo("If ") == 0) 
             {
-                if (codigo.contains("Endif;")) 
+                if ((codigo.contains("Endif;"))&&(!codigo.substring(3).contains("If ")))
                 {
+                    
                     if (revisarIf(codigo.substring(0, codigo.indexOf("Endif;") + 6))) 
                     {
                         if (revisarDentroCompleja(codigo.substring(codigo.indexOf("\n") + 1, codigo.indexOf("Endif;")))) 
                         {
                             codigo = codigo.substring(codigo.indexOf("Endif;") + 6);
+                        }
+                    }
+                }
+                else if (revisarCantidadIfEndif(codigo))
+                {
+                    if(revisarIf(codigo.substring(0,indexUltimoEndif(codigo))))
+                    {
+                        if (revisarDentroCompleja(codigo.substring(codigo.indexOf("\n") + 1, indexUltimoEndif(codigo)))) 
+                        {
+                            codigo = eliminarSaltoLinea(codigo.substring(indexUltimoEndif(codigo) + 6));
                         }
                     }
                 }
@@ -519,7 +651,8 @@ public class ComidaFrita {
         }
         return codigo;
     }
-    public static boolean revisarNombresReservados(String nombre) {
+    public static boolean revisarNombresReservados(String nombre) 
+    {
         boolean resultado = true;
         if (nombre.compareTo("D") == 0) {
             resultado = false;
